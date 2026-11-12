@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="企鵝記帳">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F2F8FD">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-512.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>企鵝記帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F8FD; --card:#FFFFFF; --pink:#5AAEE8; --pink2:#A5D4F5; --pinkL:#DDF0FC;
+  --text:#3E4A63; --muted:#8C9AB0; --line:#E1ECF5; --mint:#C9F0DE; --yellow:#FFEFB0;
+  --shadow:0 6px 18px rgba(90,174,232,.22);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:radial-gradient(ellipse at 0% 40%,rgba(214,232,250,.6),transparent 40%) fixed,radial-gradient(ellipse at 100% 70%,rgba(232,222,248,.5),transparent 40%) fixed,var(--bg);color:var(--text);
+  font-family:"Huninn","PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  font-variant-numeric:tabular-nums}
+body{min-height:100vh;padding-top:env(safe-area-inset-top);padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input{font-family:inherit;color:inherit}
+.wrap{max-width:480px;margin:0 auto;padding:12px 16px 24px}
+
+/* header */
+.hero{position:relative;background:radial-gradient(ellipse at 12% 18%,rgba(186,220,250,.95),transparent 48%),radial-gradient(ellipse at 85% 80%,rgba(222,208,246,.85),transparent 52%),radial-gradient(ellipse at 55% 10%,rgba(255,222,232,.7),transparent 42%),radial-gradient(ellipse at 30% 95%,rgba(200,236,240,.8),transparent 45%),#EEF5FD;border-radius:28px;padding:18px 18px 20px;box-shadow:var(--shadow);overflow:hidden}
+.hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.45)}
+.hero:before{width:120px;height:120px;right:-30px;top:-40px}
+.hero:after{width:70px;height:70px;left:-20px;bottom:-25px}
+.snow{position:absolute;opacity:.9;z-index:0;pointer-events:none;animation:tw 3s ease-in-out infinite}
+@keyframes tw{50%{opacity:.35;transform:rotate(30deg)}}
+.hero-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.month-nav{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.7);border-radius:999px;padding:4px 6px}
+.month-nav button{width:28px;height:28px;border-radius:50%;font-size:18px;color:var(--pink)}
+.month-nav button:active{background:var(--pinkL)}
+.month-nav span{font-size:17px;min-width:92px;text-align:center}
+.bunny{width:74px;height:74px;margin:-6px -4px -8px 0;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-4px) rotate(3deg)}}
+.total-label{position:relative;z-index:1;margin-top:10px;font-size:15.5px;color:#6B7C98}
+.total{position:relative;z-index:1;font-size:42.5px;letter-spacing:.5px;margin-top:2px}
+.total small{font-size:20px;margin-right:4px;color:#6B7C98}
+.mini{position:relative;z-index:1;display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.75);border-radius:999px;padding:5px 11px;font-size:14px}
+
+.sync{font-size:13.5px;color:var(--muted);text-align:center;margin:10px 0 0;min-height:16px}
+
+/* list */
+.day{margin-top:18px}
+.day-h{display:flex;justify-content:space-between;align-items:baseline;padding:0 6px 6px;font-size:15px;color:var(--muted)}
+.card{background:var(--card);border-radius:22px;box-shadow:0 3px 12px rgba(62,74,99,.06);overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;width:100%;text-align:left}
+.item+.item{border-top:1.5px dashed var(--line)}
+.item:active{background:#EEF7FD}
+.bub{flex:none;width:42px;height:42px;border-radius:15px;display:grid;place-items:center;font-size:24.5px}
+.item-mid{flex:1;min-width:0}
+.item-name{font-size:17.5px}
+.item-sub{font-size:13.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amt{font-size:18.5px;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);padding:40px 10px;font-size:16px;line-height:1.8}
+.empty svg{width:90px;height:90px;opacity:.9}
+
+/* FAB + nav */
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(34px + env(safe-area-inset-bottom));width:66px;height:66px;border-radius:50%;
+  background:var(--pink);color:#fff;font-size:38px;line-height:1;box-shadow:0 8px 20px rgba(64,150,215,.45);z-index:20;border:4px solid #fff}
+.fab:active{transform:translateX(-50%) scale(.92)}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
+  border-top:1.5px solid var(--line);padding:8px 0 calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:space-around}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;color:var(--muted);max-width:110px}
+.nav button .i{font-size:23.5px;filter:grayscale(1);opacity:.6}
+.nav button.on{color:var(--pink)}
+.nav button.on .i{filter:none;opacity:1}
+.nav .gap{width:76px;flex:none}
+
+/* stats */
+.sec-title{font-size:18px;margin:22px 4px 10px;display:flex;align-items:center;gap:6px}
+.donut-box{display:flex;align-items:center;gap:16px;padding:16px}
+.donut{flex:none;width:130px;height:130px;border-radius:50%;position:relative}
+.donut:after{content:"";position:absolute;inset:26px;background:#fff;border-radius:50%}
+.donut-c{position:absolute;inset:0;display:grid;place-items:center;z-index:1;text-align:center;font-size:13.5px;color:var(--muted)}
+.donut-c b{display:block;font-size:17px;color:var(--text);font-weight:normal}
+.legend{flex:1;min-width:0;font-size:14.5px;display:grid;gap:6px}
+.legend div{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.dot{width:10px;height:10px;border-radius:4px;flex:none}
+.bar-row{padding:11px 14px}
+.bar-row+.bar-row{border-top:1.5px dashed var(--line)}
+.bar-top{display:flex;justify-content:space-between;font-size:15.5px;margin-bottom:6px}
+.bar{height:10px;background:#EAF3FA;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px}
+.pct{color:var(--muted);font-size:13.5px;margin-left:4px}
+
+/* categories */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cat-tile{position:relative;background:#fff;border-radius:20px;padding:14px 6px 12px;text-align:center;box-shadow:0 3px 12px rgba(62,74,99,.06)}
+.cat-tile .bub{margin:0 auto 6px}
+.cat-tile .nm{font-size:15.5px}
+.cat-del{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#DDF0FC;color:#3F8FCC;font-size:14.5px;line-height:22px}
+.cat-tile:active{transform:scale(.96)}
+.sec-title .grow{flex:1}
+.sort-btn{font-size:14px;background:#fff;color:var(--pink);border-radius:999px;padding:6px 12px;box-shadow:0 2px 8px rgba(62,74,99,.06)}
+.sort-btn.done{background:var(--pink);color:#fff}
+.sort-list{display:flex;flex-direction:column;gap:8px}
+.sort-row{height:62px;display:flex;align-items:center;gap:12px;background:#fff;border-radius:18px;padding:0 8px 0 12px;box-shadow:0 3px 12px rgba(62,74,99,.06);transition:transform .18s;position:relative}
+.sort-row.dragging{transition:none;z-index:5;box-shadow:0 10px 24px rgba(62,74,99,.18);transform-origin:center}
+.sort-row .bub{width:40px;height:40px;font-size:21px}
+.sort-row .nm{flex:1;font-size:16px}
+.arrow{width:34px;height:34px;border-radius:12px;background:var(--pinkL);color:var(--pink);font-size:14px}
+.arrow:disabled{opacity:.3}
+.handle{width:38px;height:46px;display:grid;place-items:center;color:var(--muted);font-size:22px;touch-action:none;cursor:grab}
+.emo-own{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;color:var(--muted)}
+.emo-own input{width:64px;text-align:center;font-size:22px;padding:6px}
+.bk-btn{width:100%;display:flex;align-items:center;gap:12px;background:#fff;border-radius:18px;padding:13px 14px;text-align:left;box-shadow:0 3px 12px rgba(62,74,99,.06);margin-bottom:8px}
+.bk-btn:active{transform:scale(.98)}
+.bk-btn .bub{width:42px;height:42px;font-size:21px;background:var(--pinkL)}
+.bk-btn .t{font-size:16px}
+.bk-btn .d{font-size:13px;color:var(--muted);margin-top:2px}
+textarea.field{min-height:180px;resize:vertical;font-size:14px;line-height:1.5}
+.nudge{display:flex;align-items:center;gap:10px;background:#FFF8E1;border-radius:18px;padding:10px 14px;margin-top:12px;font-size:14.5px;line-height:1.5}
+.nudge button{flex:none;background:var(--pink);color:#fff;border-radius:999px;padding:6px 12px;font-size:14px}
+.cat-add{border:2px dashed var(--pink2);background:transparent;box-shadow:none;color:var(--pink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:15.5px}
+.cat-add b{font-size:31.5px;font-weight:normal}
+.tip{background:#fff;border-radius:20px;padding:14px 16px;font-size:15px;line-height:1.75;box-shadow:0 3px 12px rgba(62,74,99,.06)}
+.tip b{font-weight:normal;color:var(--pink)}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(62,74,99,.32);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;max-width:520px;margin:0 auto;background:var(--bg);border-radius:28px 28px 0 0;
+  padding:10px 16px calc(16px + env(safe-area-inset-bottom));max-height:94vh;overflow-y:auto;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.9,.3,1.1)}
+.sheet.show{transform:translateY(0)}
+.grab{width:44px;height:5px;border-radius:9px;background:#CFE2F0;margin:0 auto 10px}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sheet-h h3{margin:0;font-weight:normal;font-size:20px}
+.x{width:32px;height:32px;border-radius:50%;background:#fff;font-size:18px;color:var(--muted)}
+.amt-box{background:#fff;border-radius:20px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 12px rgba(62,74,99,.06)}
+.amt-box .sel{display:flex;align-items:center;gap:8px;font-size:17px}
+.amt-box .num{font-size:36px}
+.amt-box .num small{font-size:17px;color:var(--muted);margin-right:3px}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.lbl{font-size:14.5px;color:var(--muted);margin:12px 4px 6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:2px 2px 4px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;background:#fff;border-radius:16px;padding:8px 12px;font-size:15.5px;border:2px solid transparent;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.chip.on{border-color:var(--pink);background:#EAF5FD}
+.cats-pick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cp{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:16px;border:2px solid transparent;font-size:13.5px}
+.cp .bub{width:40px;height:40px;font-size:23.5px}
+.cp.on{border-color:var(--pink);background:#EAF5FD}
+.row2{display:flex;gap:8px}
+.field{flex:1;background:#fff;border:0;border-radius:14px;padding:11px 12px;font-size:17px;outline:none;min-width:0;width:100%}
+.field:focus{box-shadow:0 0 0 2px var(--pink2)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.pad button{background:#fff;border-radius:16px;height:48px;font-size:23.5px;box-shadow:0 2px 0 #E1ECF5}
+.pad button:active{background:var(--pinkL);transform:translateY(2px);box-shadow:none}
+.btns{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;height:50px;border-radius:18px;font-size:18px;background:var(--pink);color:#fff;box-shadow:0 4px 0 #3F93D1}
+.btn:active{transform:translateY(3px);box-shadow:none}
+.btn.ghost{flex:none;width:86px;background:#fff;color:#3F8FCC;box-shadow:0 4px 0 #E1ECF5}
+.emo-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;background:#fff;border-radius:18px;padding:8px}
+.emo-grid button{font-size:24.5px;height:38px;border-radius:12px;border:2px solid transparent}
+.emo-grid button.on{border-color:var(--pink);background:#EAF5FD}
+.colors{display:flex;gap:10px;flex-wrap:wrap;padding:2px}
+.colors button{width:32px;height:32px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1.5px var(--line)}
+.colors button.on{box-shadow:0 0 0 2.5px var(--pink)}
+.preview{display:flex;align-items:center;gap:10px;background:#fff;border-radius:18px;padding:10px 14px;margin-top:4px}
+
+/* dialog + toast */
+.dlg{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(62,74,99,.35);padding:24px}
+.dlg.show{display:flex}
+.dlg-box{background:#fff;border-radius:26px;padding:22px 20px 18px;max-width:320px;width:100%;text-align:center;animation:pop .22s}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.dlg-box .big{font-size:45px}
+.dlg-box p{margin:8px 0 16px;line-height:1.6;font-size:17px}
+.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-140%);z-index:70;background:#fff;
+  border-radius:999px;padding:10px 18px;box-shadow:var(--shadow);font-size:16px;transition:transform .3s cubic-bezier(.2,.9,.3,1.2);white-space:nowrap}
+.toast.show{transform:translate(-50%,0)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="hero">
+    <span class="snow" style="top:12px;left:44%;font-size:15.5px;color:#A9CBEA">✦</span><span class="snow" style="top:64px;right:24%;font-size:13.5px;color:#C9B8EA;animation-delay:.8s">△</span><span class="snow" style="bottom:20px;right:12%;font-size:18px;color:#F2B8C6;animation-delay:1.6s">✿</span><span class="snow" style="top:98px;left:60%;font-size:12.5px;color:#9FC6E8;animation-delay:2.2s">❄</span><span class="snow" style="bottom:52px;left:52%;font-size:11px;color:#E8C77A;animation-delay:1.1s">✧</span>
+    <div class="hero-top">
+      <div class="month-nav">
+        <button onclick="shiftMonth(-1)" aria-label="上個月">‹</button>
+        <span id="monthLabel"></span>
+        <button onclick="shiftMonth(1)" aria-label="下個月">›</button>
+      </div>
+      <svg class="bunny" viewBox="0 0 80 80" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 72 q-3 4 -8 3.5 q2 -4 6 -5.5Z M50 72 q3 4 8 3.5 q-2 -4 -6 -5.5Z" fill="#F7C98B" stroke="#6E6259" stroke-width="2.4"/>
+        <path d="M40 9 C23 9.5 15 24 15.5 41 C16 60 25 72.5 40 72.5 C55.5 72.5 64.5 60 64.5 41 C65 23.5 56.5 8.5 40 9Z" fill="#D9E7F3" stroke="#6E6259" stroke-width="3.2"/>
+        <path d="M40 30 C29 30 24.5 40 25 50 C25.5 61 31.5 68 40 68 C48.5 68 54.5 61 55 50 C55.5 40 51 30 40 30Z" fill="#FFFFFF"/>
+        <path d="M16.5 42 q-7 6 -6 14 q6 -1.5 8.5 -6" fill="#C9DBEA" stroke="#6E6259" stroke-width="2.8"/>
+        <path d="M63.5 42 q7 6 6 14 q-6 -1.5 -8.5 -6" fill="#C9DBEA" stroke="#6E6259" stroke-width="2.8"/>
+        <circle cx="31" cy="25" r="2.6" fill="#6E6259"/><circle cx="49" cy="25" r="2.6" fill="#6E6259"/>
+        <ellipse cx="25.5" cy="31" rx="4" ry="2.4" fill="#F4B9B4" opacity=".85"/><ellipse cx="54.5" cy="31" rx="4" ry="2.4" fill="#F4B9B4" opacity=".85"/>
+        <path d="M37 28.5 q3 -1.2 6 0 q-1.2 3.2 -3 3.4 q-1.8 -.2 -3 -3.4Z" fill="#F6CF6E" stroke="#6E6259" stroke-width="2"/>
+        <path d="M22 37 q18 6 36 0 q.5 3.5 -.5 5.5 q-17.5 5.5 -35 0 q-1 -2 -.5 -5.5Z" fill="#9CC9EE" stroke="#6E6259" stroke-width="2.4"/>
+        <path d="M49 41.5 l2 9 l4.5 -1.5 l-2.5 -8.5" fill="#9CC9EE" stroke="#6E6259" stroke-width="2.2"/>
+        <circle cx="40" cy="55" r="8.5" fill="#F8DA7E" stroke="#6E6259" stroke-width="2.6"/>
+        <text x="40" y="59.2" text-anchor="middle" font-size="12" font-family="Arial Rounded MT Bold,Arial,sans-serif" font-weight="700" fill="#6E6259">$</text>
+        <path d="M29 52 q2.5 -1 4 1.5 M51 52 q-2.5 -1 -4 1.5" fill="none" stroke="#6E6259" stroke-width="2.4"/>
+      </svg>
+    </div>
+    <div class="total-label" id="totalLabel">這個月花了</div>
+    <div class="total"><small>NT$</small><span id="monthTotal">0</span></div>
+    <div class="mini" id="miniStats"></div>
+  </div>
+  <div class="sync" id="sync"></div>
+  <div id="nudge"></div>
+
+  <section id="tab-home"></section>
+  <section id="tab-stats" class="hidden"></section>
+  <section id="tab-cats" class="hidden"></section>
+</div>
+
+<button class="fab" onclick="openAdd()" aria-label="記一筆">＋</button>
+<nav class="nav">
+  <button data-tab="home" class="on" onclick="setTab('home')"><span class="i">📒</span>明細</button>
+  <button data-tab="stats" onclick="setTab('stats')"><span class="i">📊</span>統計</button>
+  <span class="gap"></span>
+  <button data-tab="cats" onclick="setTab('cats')"><span class="i">🎀</span>類別</button>
+  <button data-tab="help" onclick="setTab('help')"><span class="i">⚙️</span>更多</button>
+</nav>
+
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+<div class="dlg" id="dlg"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- constants ---------- */
+const PAYS=[
+  {id:'cash',name:'現金',emoji:'💵'},
+  {id:'line',name:'Line Pay',emoji:'💚'},
+  {id:'apple',name:'Apple Pay',emoji:'🍎'},
+  {id:'card',name:'信用卡',emoji:'💳'},
+  {id:'bank',name:'銀行',emoji:'🏦'}
+];
+const COLORS=['#FFD6E0','#FFE5B4','#FFF3B0','#D4F5D9','#C9EEF5','#D6E2FF','#E6D9FF','#F5D5C8','#E8E8E8'];
+const BAR_COLORS={'#FFD6E0':'#FF9DB5','#FFE5B4':'#FFC069','#FFF3B0':'#F2D24B','#D4F5D9':'#7FD495','#C9EEF5':'#6FCBE0','#D6E2FF':'#86A5F5','#E6D9FF':'#B596F2','#F5D5C8':'#E8A086','#E8E8E8':'#BDB3B6'};
+const DEFAULT_CATS=[
+  {id:'food',name:'餐飲',emoji:'🍙',color:'#FFE5B4'},
+  {id:'drink',name:'飲料',emoji:'🧋',color:'#F5D5C8'},
+  {id:'snack',name:'點心',emoji:'🍰',color:'#FFD6E0'},
+  {id:'traffic',name:'交通',emoji:'🚌',color:'#C9EEF5'},
+  {id:'shop',name:'購物',emoji:'🛍️',color:'#E6D9FF'},
+  {id:'beauty',name:'美妝',emoji:'💄',color:'#FFD6E0'},
+  {id:'fun',name:'娛樂',emoji:'🎬',color:'#D6E2FF'},
+  {id:'study',name:'學習',emoji:'📚',color:'#D4F5D9'},
+  {id:'home',name:'居家',emoji:'🏠',color:'#FFF3B0'},
+  {id:'phone',name:'通訊',emoji:'📱',color:'#C9EEF5'},
+  {id:'health',name:'醫療',emoji:'🏥',color:'#D4F5D9'},
+  {id:'other',name:'其他',emoji:'🎁',color:'#E8E8E8'}
+];
+const EMOJIS=['🍙','🍜','🍱','🍰','🍩','🧋','☕','🍺','🍓','🥗','🚌','🚇','🚕','🛵','⛽','✈️','🛍️','👗','👟','💄','🧴','💅','💇','🎬','🎮','🎤','🎨','🎧','📚','✏️','💻','📱','🏠','💡','🧻','🧺','🐶','🐱','🏥','💊','🏋️','🎁','💝','🧧','🏖️','🧾','💰','⭐','🌸','🐰','🐧'];
+const KEY='bunny-ledger-v1';
+const WD=['日','一','二','三','四','五','六'];
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Math.round(n).toLocaleString('zh-TW');
+const pad2=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+const today=()=>ymd(new Date());
+const monthKey=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1);
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const barColor=c=>BAR_COLORS[c]||'#FF9DB5';
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1800)}
+
+/* ---------- state ---------- */
+const state={cats:DEFAULT_CATS.map(c=>({...c})),expenses:[],month:new Date(),tab:'home'};
+state.month.setDate(1);
+let lastPay='cash';
+try{lastPay=localStorage.getItem(KEY+'-pay')||'cash'}catch(e){}
+
+/* ---------- storage: cloud (per-person private) with local fallback ---------- */
+const store={mode:'local',profileRef:null,expCol:null,loading:false,chain:Promise.resolve()};
+function lsLoad(){try{const o=JSON.parse(localStorage.getItem(KEY)||'{}');if(Array.isArray(o.cats)&&o.cats.length)state.cats=o.cats;if(Array.isArray(o.expenses))state.expenses=o.expenses}catch(e){}}
+function lsSave(){try{localStorage.setItem(KEY,JSON.stringify({cats:state.cats,expenses:state.expenses}))}catch(e){}}
+
+async function initCloud(){
+  for(let i=0;i<30&&!(window.claude&&window.claude.use);i++)await new Promise(r=>setTimeout(r,100));
+  if(!(window.claude&&window.claude.use)){setSync();return}
+  try{
+    const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
+    if(!db||!user){setSync();return}
+    const uid=await user.id();
+    if(!uid){setSync();return}
+    store.mode='cloud';store.loading=true;
+    state.expenses=[];state.cats=DEFAULT_CATS.map(c=>({...c}));
+    store.profileRef=db.doc('data/users/'+uid+'/profile');
+    store.expCol=store.profileRef.collection('expenses');
+    setSync('🐧 企鵝正在翻帳本…');render();
+    let gotExp=false;
+    const timer=setTimeout(()=>{if(!gotExp)setSync('☁️ 暫時連不上雲端，資料可能不是最新的')},10000);
+    store.profileRef.onSnapshot(s=>{
+      if(s.exists){const d=s.data();if(Array.isArray(d.cats)&&d.cats.length)state.cats=d.cats.map(c=>({...c}))}
+      render();
+    },()=>{});
+    store.expCol.onSnapshot(s=>{
+      state.expenses=s.docs.map(d=>({...d.data(),id:d.id}));
+      if(!s.metadata.fromCache){gotExp=true;clearTimeout(timer);store.loading=false;setSync()}
+      render();
+    },()=>{clearTimeout(timer);store.loading=false;setSync('☁️ 雲端連線中斷了，重新打開頁面試試看')});
+  }catch(e){setSync()}
+}
+function setSync(msg){
+  $('#sync').textContent=msg||'';
+}
+function queued(fn){store.chain=store.chain.then(fn,fn);return store.chain}
+
+async function putExpense(e){
+  if(store.mode==='cloud'){const {id,...body}=e;await store.expCol.doc(id).set(body)}
+  else{const i=state.expenses.findIndex(x=>x.id===e.id);if(i>=0)state.expenses[i]=e;else state.expenses.push(e);lsSave();render()}
+}
+async function removeExpense(id){
+  if(store.mode==='cloud')await store.expCol.doc(id).delete();
+  else{state.expenses=state.expenses.filter(x=>x.id!==id);lsSave();render()}
+}
+async function saveCats(cats){
+  state.cats=cats;render();
+  if(store.mode==='cloud')return queued(()=>store.profileRef.set({cats}));
+  lsSave();
+}
+
+/* ---------- derived ---------- */
+function catOf(e){return state.cats.find(c=>c.id===e.catId)||{id:e.catId,name:e.catName||'未分類',emoji:e.catEmoji||'❔',color:e.catColor||'#E8E8E8'}}
+function payOf(id){return PAYS.find(p=>p.id===id)||{id,name:'其他',emoji:'💰'}}
+function monthExp(){const k=monthKey(state.month);return state.expenses.filter(e=>typeof e.date==='string'&&e.date.startsWith(k))}
+
+/* ---------- render ---------- */
+function render(){
+  const m=state.month, list=monthExp(), total=list.reduce((s,e)=>s+(+e.amount||0),0);
+  $('#monthLabel').textContent=m.getFullYear()+' 年 '+(m.getMonth()+1)+' 月';
+  const isNow=monthKey(m)===monthKey(new Date());
+  $('#totalLabel').textContent=isNow?'這個月花了':(m.getMonth()+1)+' 月總共花了';
+  $('#monthTotal').textContent=fmt(total);
+  const days=isNow?new Date().getDate():new Date(m.getFullYear(),m.getMonth()+1,0).getDate();
+  const todaySum=list.filter(e=>e.date===today()).reduce((s,e)=>s+(+e.amount||0),0);
+  $('#miniStats').innerHTML=(isNow?`<span class="pill">今天 NT$ ${fmt(todaySum)}</span>`:'')+
+    `<span class="pill">日均 NT$ ${fmt(total/Math.max(days,1))}</span><span class="pill">${list.length} 筆</span>`;
+  renderHome(list);renderStats(list,total);
+  if(state.tab==='help')$('#tab-cats').innerHTML=renderHelp();else renderCats();
+  renderNudge();
+}
+
+function renderHome(list){
+  const el=$('#tab-home');
+  if(!list.length){
+    el.innerHTML=`<div class="empty">${store.loading?'讀取中…':document.querySelector('.bunny').outerHTML.replace('class="bunny"','class="bunny" style="width:96px;height:96px;margin:0 auto 8px;display:block"')+'這個月還沒有記帳喔<br>按下面的 ＋ 記第一筆吧 🐾'}</div>`;return;
+  }
+  const groups={};
+  list.forEach(e=>{(groups[e.date]=groups[e.date]||[]).push(e)});
+  el.innerHTML=Object.keys(groups).sort().reverse().map(d=>{
+    const items=groups[d].sort((a,b)=>(b.ts||0)-(a.ts||0));
+    const dt=new Date(d+'T00:00:00');
+    const sum=items.reduce((s,e)=>s+(+e.amount||0),0);
+    const label=(d===today()?'今天 · ':'')+(dt.getMonth()+1)+'/'+dt.getDate()+'（'+WD[dt.getDay()]+'）';
+    return `<div class="day"><div class="day-h"><span>${label}</span><span>NT$ ${fmt(sum)}</span></div><div class="card">`+
+      items.map(e=>{const c=catOf(e),p=payOf(e.pay);
+        return `<button class="item" onclick="openAdd('${esc(e.id)}')">
+          <span class="bub" style="background:${esc(c.color)}">${esc(c.emoji)}</span>
+          <span class="item-mid"><div class="item-name">${esc(c.name)}</div>
+          <div class="item-sub">${p.emoji} ${esc(p.name)}${e.note?' · '+esc(e.note):''}</div></span>
+          <span class="amt">$${fmt(e.amount)}</span></button>`}).join('')+`</div></div>`;
+  }).join('');
+}
+
+function renderStats(list,total){
+  const el=$('#tab-stats');
+  if(!list.length){el.innerHTML=`<div class="empty">這個月還沒有資料可以統計 📊</div>`;return}
+  const byCat={};
+  list.forEach(e=>{const c=catOf(e);const k=c.id;(byCat[k]=byCat[k]||{c,sum:0,n:0});byCat[k].sum+=+e.amount||0;byCat[k].n++});
+  const cats=Object.values(byCat).sort((a,b)=>b.sum-a.sum);
+  let acc=0;const stops=cats.map(x=>{const a=acc/total*360;acc+=x.sum;const b=acc/total*360;return `${barColor(x.c.color)} ${a}deg ${b}deg`}).join(',');
+  const byPay={};list.forEach(e=>{byPay[e.pay]=(byPay[e.pay]||0)+(+e.amount||0)});
+  const pays=Object.entries(byPay).sort((a,b)=>b[1]-a[1]);
+  const maxPay=pays.length?pays[0][1]:1;
+  el.innerHTML=`
+  <div class="sec-title">🍡 分類佔比</div>
+  <div class="card donut-box">
+    <div class="donut" style="background:conic-gradient(${stops})"><div class="donut-c"><div>總支出<b>$${fmt(total)}</b></div></div></div>
+    <div class="legend">${cats.slice(0,6).map(x=>`<div><span class="dot" style="background:${barColor(x.c.color)}"></span>${esc(x.c.emoji)} ${esc(x.c.name)} <span class="pct">${Math.round(x.sum/total*100)}%</span></div>`).join('')}${cats.length>6?`<div class="pct">…還有 ${cats.length-6} 類</div>`:''}</div>
+  </div>
+  <div class="sec-title">🎀 各類別花費</div>
+  <div class="card">${cats.map(x=>`<div class="bar-row"><div class="bar-top"><span>${esc(x.c.emoji)} ${esc(x.c.name)}<span class="pct">${x.n} 筆</span></span><span>$${fmt(x.sum)}</span></div>
+    <div class="bar"><i style="width:${Math.max(x.sum/cats[0].sum*100,3)}%;background:${barColor(x.c.color)}"></i></div></div>`).join('')}</div>
+  <div class="sec-title">💳 支付方式</div>
+  <div class="card">${pays.map(([id,sum])=>{const p=payOf(id);return `<div class="bar-row"><div class="bar-top"><span>${p.emoji} ${esc(p.name)}<span class="pct">${Math.round(sum/total*100)}%</span></span><span>$${fmt(sum)}</span></div>
+    <div class="bar"><i style="width:${Math.max(sum/maxPay*100,3)}%;background:var(--pink2)"></i></div></div>`}).join('')}</div>`;
+}
+
+let sorting=null; // array of cats while in sort mode
+function renderCats(){
+  const el=$('#tab-cats');
+  if(sorting){
+    el.innerHTML=`<div class="sec-title">↕️ 調整順序<span class="grow"></span><button class="sort-btn done" onclick="finishSort()">完成 ✓</button></div>
+    <div class="pct" style="margin:-4px 6px 10px">按住右邊的 ≡ 上下拖曳，或用箭頭移動</div>
+    <div class="sort-list" id="sortList">${sorting.map((c,i)=>`<div class="sort-row">
+      <span class="bub" style="background:${esc(c.color)}">${esc(c.emoji)}</span><span class="nm">${esc(c.name)}</span>
+      <button class="arrow" onclick="moveCat(${i},-1)" ${i===0?'disabled':''} aria-label="上移">▲</button>
+      <button class="arrow" onclick="moveCat(${i},1)" ${i===sorting.length-1?'disabled':''} aria-label="下移">▼</button>
+      <span class="handle" onpointerdown="startDrag(event,${i})">≡</span></div>`).join('')}</div>`;
+    return;
+  }
+  el.innerHTML=`<div class="sec-title">🎀 我的類別<span class="grow"></span><button class="sort-btn" onclick="startSort()">↕️ 調整順序</button></div>
+  <div class="pct" style="margin:-4px 6px 10px">點類別可以改名字、圖案、顏色或刪除</div>
+  <div class="cat-grid">${state.cats.map(c=>`<button class="cat-tile" onclick="openCatEditor('${esc(c.id)}')">
+    <span class="bub" style="background:${esc(c.color)}">${esc(c.emoji)}</span><div class="nm">${esc(c.name)}</div></button>`).join('')}
+    <button class="cat-tile cat-add" onclick="openCatEditor()"><b>＋</b>新增類別</button>
+  </div>
+  <div class="sec-title">☁️ 資料存哪裡</div>
+  <div class="tip">資料只存在這支手機的企鵝記帳裡，不會上傳到任何地方 🔒<br>刪掉桌面圖示或換手機前，記得先到「更多」下載完整備份喔！</div>`;
+}
+function startSort(){sorting=state.cats.map(c=>({...c}));renderCats()}
+function moveCat(i,d){const j=i+d;if(j<0||j>=sorting.length)return;[sorting[i],sorting[j]]=[sorting[j],sorting[i]];renderCats()}
+async function finishSort(){
+  const changed=sorting.map(c=>c.id).join()!==state.cats.map(c=>c.id).join();
+  const next=sorting;sorting=null;
+  if(!changed){renderCats();return}
+  try{await saveCats(next);toast('順序排好了 ✨')}catch(e){toast('儲存失敗了，再試一次')}
+}
+function startDrag(ev,idx){
+  ev.preventDefault();
+  const rows=[...$('#sortList').children],row=rows[idx],step=row.getBoundingClientRect().height+8,y0=ev.clientY;
+  let target=idx;const h=ev.currentTarget;
+  try{h.setPointerCapture(ev.pointerId)}catch(_){}
+  row.classList.add('dragging');
+  const move=e=>{
+    const dy=e.clientY-y0;row.style.transform=`translateY(${dy}px) scale(1.03)`;
+    target=Math.max(0,Math.min(rows.length-1,idx+Math.round(dy/step)));
+    rows.forEach((r,i)=>{if(i===idx)return;
+      const sh=(idx<i&&i<=target)?-step:(target<=i&&i<idx)?step:0;r.style.transform=sh?`translateY(${sh}px)`:''});
+  };
+  const up=()=>{
+    h.removeEventListener('pointermove',move);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);
+    if(target!==idx){const [c]=sorting.splice(idx,1);sorting.splice(target,0,c)}
+    renderCats();
+  };
+  h.addEventListener('pointermove',move);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up);
+}
+
+function renderHelp(){
+  const n=state.expenses.length,lb=lastBackup();
+  return `<div class="sec-title">💾 備份<span class="grow"></span><span class="pct">目前共 ${n} 筆</span></div>
+  <div class="pct" style="margin:-4px 6px 10px">上次備份：${lb?new Date(lb).toLocaleDateString('zh-TW'):'還沒備份過'}</div>
+  <button class="bk-btn" onclick="exportJSON()"><span class="bub">🧊</span><span><div class="t">備份全部資料</div><div class="d">選「儲存到檔案」存起來，換手機時可以還原</div></span></button>
+  <button class="bk-btn" onclick="exportCSV()"><span class="bub">📊</span><span><div class="t">匯出成 Excel 表格</div><div class="d">CSV 檔，用 Excel、Numbers、Google 試算表都能打開</div></span></button>
+  <button class="bk-btn" onclick="$('#importFile').click()"><span class="bub">📥</span><span><div class="t">從備份檔還原</div><div class="d">選之前存的 .json 或 .csv 檔，不會刪掉現在的資料</div></span></button>
+  <button class="bk-btn" onclick="openPaste()"><span class="bub">📝</span><span><div class="t">貼上文字還原</div><div class="d">貼上舊版「複製成文字」複製的內容</div></span></button>
+  <button class="bk-btn" onclick="copyCSV()"><span class="bub">📋</span><span><div class="t">複製成文字</div><div class="d">可以貼到備忘錄或試算表</div></span></button>
+  <input type="file" id="importFile" accept=".json,.csv,application/json,text/csv,text/plain" class="hidden" onchange="importFileInput(this)">
+  <div class="sec-title">🔒 資料存哪裡</div>
+  <div class="tip">資料只存在這支手機的企鵝記帳裡，不會上傳到任何地方。<br><b>刪掉桌面圖示，資料也會一起不見</b>，換手機前記得先備份 🐧</div>`;
+}
+
+/* ---------- tabs / month ---------- */
+function setTab(t){
+  state.tab=t;
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  $('#tab-home').classList.toggle('hidden',t!=='home');
+  $('#tab-stats').classList.toggle('hidden',t!=='stats');
+  const cats=$('#tab-cats');
+  cats.classList.toggle('hidden',!(t==='cats'||t==='help'));
+  if(t==='help')cats.innerHTML=renderHelp();else renderCats();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function shiftMonth(n){state.month=new Date(state.month.getFullYear(),state.month.getMonth()+n,1);render()}
+
+/* ---------- sheet ---------- */
+function openSheet(html){$('#sheet').innerHTML='<div class="grab"></div>'+html;$('#overlay').classList.add('show');$('#sheet').classList.add('show');$('#sheet').scrollTop=0}
+function closeSheet(){$('#overlay').classList.remove('show');$('#sheet').classList.remove('show')}
+
+/* ---------- add / edit expense ---------- */
+let draft=null;
+function openAdd(id){
+  const e=id?state.expenses.find(x=>x.id===id):null;
+  if(e)draft={...e,amountStr:String(e.amount)};
+  else{
+    const isNow=monthKey(state.month)===monthKey(new Date());
+    draft={id:null,amountStr:'',catId:(state.cats[0]||{}).id,pay:lastPay,date:isNow?today():monthKey(state.month)+'-01',note:''};
+  }
+  if(!state.cats.find(c=>c.id===draft.catId)&&!e)draft.catId=(state.cats[0]||{}).id;
+  openSheet(`
+  <div class="sheet-h"><h3>${e?'✏️ 修改這筆':'🐧 記一筆'}</h3><button class="x" onclick="closeSheet()">✕</button></div>
+  <div class="amt-box" id="amtBox"><span class="sel" id="selCat"></span><span class="num"><small>NT$</small><span id="amtNum">0</span></span></div>
+  <div class="lbl">類別</div>
+  <div class="cats-pick" id="catPick">${(()=>{let cs=state.cats.slice();if(e&&!cs.find(c=>c.id===e.catId))cs.push(catOf(e));return cs})().map(c=>`<button class="cp" data-id="${esc(c.id)}" onclick="pickCat('${esc(c.id)}')"><span class="bub" style="background:${esc(c.color)}">${esc(c.emoji)}</span>${esc(c.name)}</button>`).join('')}</div>
+  <div class="lbl">支付方式</div>
+  <div class="chips" id="payPick">${PAYS.map(p=>`<button class="chip" data-id="${p.id}" onclick="pickPay('${p.id}')">${p.emoji} ${p.name}</button>`).join('')}</div>
+  <div class="lbl">日期 & 備註</div>
+  <div class="row2"><input class="field" type="date" id="dDate" value="${esc(draft.date)}" style="flex:0 0 46%"><input class="field" id="dNote" maxlength="40" placeholder="寫點什麼…（選填）" value="${esc(draft.note||'')}"></div>
+  <div class="pad">${['1','2','3','4','5','6','7','8','9','00','0','⌫'].map(k=>`<button onclick="key('${k}')">${k}</button>`).join('')}</div>
+  <div class="btns">${e?`<button class="btn ghost" onclick="askDelExp('${esc(e.id)}')">刪除</button>`:''}<button class="btn" onclick="saveDraft()">${e?'儲存修改':'記下來 ♡'}</button></div>`);
+  syncDraft();
+}
+function syncDraft(){
+  $('#amtNum').textContent=fmt(+draft.amountStr||0);
+  const c=state.cats.find(x=>x.id===draft.catId)||(draft.catName?catOf(draft):null);
+  $('#selCat').innerHTML=c?`<span class="bub" style="background:${esc(c.color)};width:34px;height:34px;font-size:20px;border-radius:12px">${esc(c.emoji)}</span>${esc(c.name)}`:'';
+  document.querySelectorAll('#catPick .cp').forEach(b=>b.classList.toggle('on',b.dataset.id===draft.catId));
+  document.querySelectorAll('#payPick .chip').forEach(b=>b.classList.toggle('on',b.dataset.id===draft.pay));
+}
+function key(k){
+  let s=draft.amountStr;
+  if(k==='⌫')s=s.slice(0,-1);
+  else{s=(s+k).replace(/^0+/,'');if(s.length>8)return}
+  draft.amountStr=s;syncDraft();
+}
+function pickCat(id){draft.catId=id;syncDraft()}
+function pickPay(id){draft.pay=id;syncDraft()}
+async function saveDraft(){
+  const amt=parseInt(draft.amountStr||'0',10);
+  if(!amt){const b=$('#amtBox');b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');toast('金額還沒填喔 🥺');return}
+  const c=state.cats.find(x=>x.id===draft.catId)||catOf(draft);
+  const date=$('#dDate').value||today();
+  const e={id:draft.id||newId(),amount:amt,catId:c.id,catName:c.name,catEmoji:c.emoji,catColor:c.color,
+    pay:draft.pay,date,note:$('#dNote').value.trim().slice(0,40),ts:draft.ts||Date.now()};
+  const editing=!!draft.id;
+  lastPay=draft.pay;try{localStorage.setItem(KEY+'-pay',lastPay)}catch(_){}
+  closeSheet();
+  if(!date.startsWith(monthKey(state.month))){const d=new Date(date+'T00:00:00');state.month=new Date(d.getFullYear(),d.getMonth(),1)}
+  try{await putExpense(e);toast(editing?'改好了 ✨':'記好了！企鵝幫你收好了 🐧')}
+  catch(err){toast(err&&err.code==='quota_exceeded'?'空間滿了，刪掉一些舊資料再試試':'存檔失敗了，再試一次 🙏')}
+  render();
+}
+
+/* ---------- dialog ---------- */
+function confirmBox(icon,msg,okText,onOk){
+  const d=$('#dlg');
+  d.innerHTML=`<div class="dlg-box"><div class="big">${icon}</div><p>${msg}</p><div class="btns" style="margin-top:0">
+    <button class="btn ghost" style="flex:1" onclick="closeDlg()">再想想</button><button class="btn" id="dlgOk">${okText}</button></div></div>`;
+  d.classList.add('show');
+  $('#dlgOk').onclick=()=>{closeDlg();onOk()};
+  d.onclick=ev=>{if(ev.target===d)closeDlg()};
+}
+function closeDlg(){$('#dlg').classList.remove('show')}
+function askDelExp(id){
+  confirmBox('🗑️','確定要刪掉這筆嗎？','刪除',async()=>{
+    closeSheet();
+    try{await removeExpense(id);toast('刪掉了 👋')}catch(e){toast('刪除失敗了，再試一次')}
+  });
+}
+
+/* ---------- categories ---------- */
+let newCat=null;
+function openCatEditor(id){
+  const c=id?state.cats.find(x=>x.id===id):null;
+  newCat=c?{id:c.id,emoji:c.emoji,color:c.color,name:c.name}:{id:null,emoji:'🌸',color:COLORS[0],name:''};
+  openSheet(`
+  <div class="sheet-h"><h3>${c?'✏️ 編輯類別':'🎀 新增類別'}</h3><button class="x" onclick="closeSheet()">✕</button></div>
+  <div class="preview"><span class="bub" id="ncBub"></span><input class="field" id="ncName" maxlength="6" placeholder="類別名稱（例如：寵物）" style="padding:8px 4px" value="${esc(newCat.name)}"></div>
+  <div class="lbl">選個圖案</div>
+  <div class="emo-grid">${EMOJIS.map(e=>`<button data-e="${e}" onclick="ncEmoji('${e}')">${e}</button>`).join('')}</div>
+  <div class="emo-own">或自己輸入一個 emoji：<input class="field" id="ncOwn" maxlength="8" placeholder="🙂" value="${EMOJIS.includes(newCat.emoji)?'':esc(newCat.emoji)}" oninput="ncOwnInput(this.value)"></div>
+  <div class="lbl">選個顏色</div>
+  <div class="colors">${COLORS.map(x=>`<button data-c="${x}" style="background:${x}" onclick="ncColor('${x}')"></button>`).join('')}</div>
+  <div class="btns">${c?`<button class="btn ghost" onclick="askDelCat('${esc(c.id)}')">刪除</button>`:''}<button class="btn" onclick="saveCat()">${c?'儲存修改':'新增 ♡'}</button></div>`);
+  ncSync();
+}
+function ncSync(){
+  const b=$('#ncBub');b.textContent=newCat.emoji;b.style.background=newCat.color;
+  document.querySelectorAll('.emo-grid button').forEach(x=>x.classList.toggle('on',x.dataset.e===newCat.emoji));
+  document.querySelectorAll('.colors button').forEach(x=>x.classList.toggle('on',x.dataset.c===newCat.color));
+}
+function firstGrapheme(v){
+  v=(v||'').trim();if(!v)return'';
+  try{if(window.Intl&&Intl.Segmenter){for(const g of new Intl.Segmenter().segment(v))return g.segment}}catch(_){}
+  return Array.from(v)[0];
+}
+function ncOwnInput(v){const g=firstGrapheme(v);if(g){newCat.emoji=g;ncSync()}}
+function ncEmoji(e){newCat.emoji=e;const o=$('#ncOwn');if(o)o.value='';ncSync()}
+function ncColor(c){newCat.color=c;ncSync()}
+async function saveCat(){
+  const name=($('#ncName').value||'').trim();
+  if(!name){toast('幫類別取個名字吧 ✏️');$('#ncName').focus();return}
+  if(state.cats.some(c=>c.name===name&&c.id!==newCat.id)){toast('已經有「'+name+'」囉');return}
+  const item={id:newCat.id||('c'+newId()),name,emoji:newCat.emoji,color:newCat.color};
+  const editing=!!newCat.id;
+  const next=editing?state.cats.map(c=>c.id===item.id?item:c):[...state.cats,item];
+  closeSheet();
+  try{await saveCats(next);toast(editing?'改好了 '+item.emoji:'新增了「'+name+'」'+item.emoji)}
+  catch(e){toast('儲存失敗了，再試一次')}
+}
+function askDelCat(id){
+  const c=state.cats.find(x=>x.id===id);if(!c)return;
+  if(state.cats.length<=1){toast('至少要留一個類別喔');return}
+  const used=state.expenses.filter(e=>e.catId===id).length;
+  confirmBox(c.emoji,`要刪除「${esc(c.name)}」嗎？`+(used?`<br><span class="pct" style="margin:0">之前記的 ${used} 筆還會保留，不會不見</span>`:''),'刪除',async()=>{
+    closeSheet();try{await saveCats(state.cats.filter(x=>x.id!==id));toast('刪掉「'+c.name+'」了')}catch(e){toast('刪除失敗了，再試一次')}
+  });
+}
+
+/* ---------- backup ---------- */
+function stamp(){const d=new Date();return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())}
+function csvText(){
+  const q=v=>{v=String(v??'');return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const rows=[['日期','類別','金額(NT$)','支付方式','備註']];
+  state.expenses.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.ts||0)-(b.ts||0))
+    .forEach(e=>rows.push([e.date,catOf(e).name,e.amount,payOf(e.pay).name,e.note||'']));
+  return rows.map(r=>r.map(q).join(',')).join('\r\n');
+}
+const LB_KEY=KEY+'-lastBackup';
+function lastBackup(){try{return +localStorage.getItem(LB_KEY)||0}catch(_){return 0}}
+function markBackup(){try{localStorage.setItem(LB_KEY,String(Date.now()))}catch(_){}renderNudge()}
+async function offerFile(filename,data,mime,isBackup){
+  if(!state.expenses.length){toast('還沒有資料可以備份喔');return}
+  const file=new File([data],filename,{type:mime});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+      if(isBackup)markBackup();toast('備份好了 🧊');return;
+    }
+  }catch(e){if(e&&e.name==='AbortError')return}
+  try{
+    const url=URL.createObjectURL(file),a=document.createElement('a');
+    a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    if(isBackup)markBackup();toast('備份好了 🧊');
+  }catch(_){toast('存檔失敗了，改用「複製成文字」吧')}
+}
+function exportCSV(){offerFile('企鵝記帳_'+stamp()+'.csv','\ufeff'+csvText(),'text/csv',false)}
+function exportJSON(){offerFile('企鵝記帳備份_'+stamp()+'.json',JSON.stringify({app:'penguin-ledger',version:1,exportedAt:new Date().toISOString(),cats:state.cats,expenses:state.expenses},null,1),'application/json',true)}
+async function copyCSV(){
+  if(!state.expenses.length){toast('還沒有資料可以複製喔');return}
+  try{await navigator.clipboard.writeText(csvText());toast('複製好了，可以貼上囉 📋')}
+  catch(_){toast('複製失敗了 🥲')}
+}
+function importFileInput(input){
+  const f=input.files&&input.files[0];input.value='';if(!f)return;
+  const r=new FileReader();r.onload=()=>handleBackupText(String(r.result||''));r.readAsText(f);
+}
+function openPaste(){
+  openSheet(`<div class="sheet-h"><h3>📝 貼上文字還原</h3><button class="x" onclick="closeSheet()">✕</button></div>
+  <div class="pct" style="margin:0 4px 8px">把舊版「複製成文字」或備份檔的內容整個貼進來</div>
+  <textarea class="field" id="pasteBox" placeholder="日期,類別,金額(NT$),支付方式,備註&#10;2026-11-12,餐飲,120,Line Pay,午餐"></textarea>
+  <div class="btns"><button class="btn" onclick="const t=$('#pasteBox').value;closeSheet();handleBackupText(t)">開始還原</button></div>`);
+}
+function parseCSV(t){
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','){row.push(f);f=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}
+    else f+=c}
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows.filter(r=>r.some(x=>x.trim()!==''));
+}
+function hashStr(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h+str.charCodeAt(i))|0;return (h>>>0).toString(36)}
+function fromCSV(text){
+  const rows=parseCSV(text.replace(/^\ufeff/,''));if(rows.length<2)return null;
+  const head=rows[0].map(h=>h.trim());
+  const ix=k=>head.findIndex(h=>h.startsWith(k));
+  const iD=ix('日期'),iC=ix('類別'),iA=ix('金額'),iP=ix('支付'),iN=ix('備註');
+  if(iD<0||iA<0)return null;
+  const cats=[],exps=[],seen={};
+  rows.slice(1).forEach(r=>{
+    const date=(r[iD]||'').trim().replace(/\//g,'-').replace(/^(\d{4})-(\d)-/,'$1-0$2-').replace(/-(\d)$/,'-0$1');
+    const amount=parseInt(String(r[iA]||'').replace(/[^\d]/g,''),10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!amount)return;
+    const cname=(iC>=0?r[iC]:'').trim()||'其他';
+    let c=state.cats.find(x=>x.name===cname)||cats.find(x=>x.name===cname);
+    if(!c){c={id:'c'+hashStr('cat'+cname),name:cname.slice(0,6),emoji:'🎁',color:'#E8E8E8'};cats.push(c)}
+    const pname=(iP>=0?r[iP]:'').trim().toLowerCase();
+    const pay=(PAYS.find(p=>p.name.toLowerCase()===pname)||{id:'cash'}).id;
+    const note=(iN>=0?r[iN]:'').trim();
+    const key=[date,cname,amount,pay,note].join('|');seen[key]=(seen[key]||0)+1;
+    exps.push({id:'v'+hashStr(key+'#'+seen[key]),amount,catId:c.id,catName:c.name,catEmoji:c.emoji,catColor:c.color,pay,date,note,ts:Date.parse(date)+seen[key]});
+  });
+  return {cats,expenses:exps};
+}
+function handleBackupText(text){
+  text=(text||'').trim();if(!text){toast('沒有內容耶 🥺');return}
+  let o=null;
+  if(text[0]==='{'){try{o=JSON.parse(text)}catch(_){}}
+  if(!o)o=fromCSV(text);
+  if(!o){toast('這個內容看不懂耶 🥺');return}
+  const exps=Array.isArray(o.expenses)?o.expenses.filter(e=>e&&e.id&&+e.amount>0&&/^\d{4}-\d{2}-\d{2}$/.test(e.date||'')):[];
+  const cats=Array.isArray(o.cats)?o.cats.filter(c=>c&&c.id&&c.name):[];
+  if(!exps.length&&!cats.length){toast('裡面沒有記帳資料');return}
+  const have=new Set(state.expenses.map(e=>e.id));
+  const newExps=exps.filter(e=>!have.has(String(e.id)));
+  const haveC=new Set(state.cats.map(c=>c.id)),haveN=new Set(state.cats.map(c=>c.name));
+  const newCats=cats.filter(c=>!haveC.has(String(c.id))&&!haveN.has(String(c.name)));
+  if(!newExps.length&&!newCats.length){toast('這些資料都已經在了 ✨');return}
+  confirmBox('📥',`要加回 <b style="font-weight:normal;color:var(--pink)">${newExps.length}</b> 筆帳`+(newCats.length?`和 ${newCats.length} 個類別`:'')+`嗎？<br><span class="pct" style="margin:0">現在的資料不會被刪掉或覆蓋</span>`,'還原',()=>doImport(newExps,newCats));
+}
+function renderNudge(){
+  const el=$('#nudge');if(!el)return;
+  const n=state.expenses.length,lb=lastBackup();
+  const need=n>=10&&(!lb||Date.now()-lb>30*864e5);
+  el.innerHTML=need?`<div class="nudge"><span style="flex:1">🧊 ${lb?'超過一個月沒備份了':'還沒備份過喔'}，存一份比較安心～</span><button onclick="exportJSON()">備份</button></div>`:'';
+}
+async function doImport(exps,cats){
+  try{
+    if(cats.length)await saveCats([...state.cats,...cats.map(c=>({id:String(c.id),name:String(c.name).slice(0,6),emoji:String(c.emoji||'🎁'),color:String(c.color||'#E8E8E8')}))]);
+    let done=0;
+    for(const e of exps){
+      const clean={id:String(e.id),amount:Math.round(+e.amount),catId:String(e.catId||''),catName:String(e.catName||''),catEmoji:String(e.catEmoji||''),catColor:String(e.catColor||''),
+        pay:String(e.pay||'cash'),date:e.date,note:String(e.note||'').slice(0,40),ts:+e.ts||Date.now()};
+      if(store.mode==='cloud'){const {id,...body}=clean;await store.expCol.doc(id).set(body)}
+      else state.expenses.push(clean);
+      done++;if(done%20===0)toast(`還原中… ${done}/${exps.length}`);
+    }
+    if(store.mode!=='cloud'){lsSave();render()}
+    toast(`還原好了！加回 ${done} 筆 🐧`);
+  }catch(err){toast(err&&err.code==='quota_exceeded'?'空間滿了，沒辦法全部還原':'還原到一半失敗了，再試一次（已經加回的不會重複）')}
+}
+
+/* ---------- boot ---------- */
+lsLoad();render();
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(_){}
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
