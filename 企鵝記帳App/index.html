@@ -241,11 +241,11 @@ textarea.field{min-height:180px;resize:vertical;font-size:14px;line-height:1.5}
 /* ---------- constants ---------- */
 const PAYS=[
   {id:'cash',name:'現金',emoji:'💵'},
-  {id:'line',name:'Line Pay',emoji:'💚'},
-  {id:'apple',name:'Apple Pay',emoji:'🍎'},
-  {id:'card',name:'信用卡',emoji:'💳'},
-  {id:'bank',name:'銀行',emoji:'🏦'}
+  {id:'ctbc',name:'中信卡',emoji:'💳'},
+  {id:'post',name:'郵局卡',emoji:'📮'},
+  {id:'lpm',name:'LINE Pay Money',emoji:'💚'}
 ];
+const OLD_PAYS=[{id:'line',name:'Line Pay',emoji:'💚'},{id:'apple',name:'Apple Pay',emoji:'🍎'},{id:'card',name:'信用卡',emoji:'💳'},{id:'bank',name:'銀行',emoji:'🏦'}];
 const COLORS=['#FFD6E0','#FFE5B4','#FFF3B0','#D4F5D9','#C9EEF5','#D6E2FF','#E6D9FF','#F5D5C8','#E8E8E8'];
 const BAR_COLORS={'#FFD6E0':'#FF9DB5','#FFE5B4':'#FFC069','#FFF3B0':'#F2D24B','#D4F5D9':'#7FD495','#C9EEF5':'#6FCBE0','#D6E2FF':'#86A5F5','#E6D9FF':'#B596F2','#F5D5C8':'#E8A086','#E8E8E8':'#BDB3B6'};
 const DEFAULT_CATS=[
@@ -284,6 +284,7 @@ const state={cats:DEFAULT_CATS.map(c=>({...c})),expenses:[],month:new Date(),tab
 state.month.setDate(1);
 let lastPay='cash';
 try{lastPay=localStorage.getItem(KEY+'-pay')||'cash'}catch(e){}
+if(!PAYS.some(p=>p.id===lastPay))lastPay='cash';
 
 /* ---------- storage: cloud (per-person private) with local fallback ---------- */
 const store={mode:'local',profileRef:null,expCol:null,loading:false,chain:Promise.resolve()};
@@ -337,7 +338,7 @@ async function saveCats(cats){
 
 /* ---------- derived ---------- */
 function catOf(e){return state.cats.find(c=>c.id===e.catId)||{id:e.catId,name:e.catName||'未分類',emoji:e.catEmoji||'❔',color:e.catColor||'#E8E8E8'}}
-function payOf(id){return PAYS.find(p=>p.id===id)||{id,name:'其他',emoji:'💰'}}
+function payOf(id){return PAYS.find(p=>p.id===id)||OLD_PAYS.find(p=>p.id===id)||{id,name:'其他',emoji:'💰'}}
 function monthExp(){const k=monthKey(state.month);return state.expenses.filter(e=>typeof e.date==='string'&&e.date.startsWith(k))}
 
 /* ---------- render ---------- */
@@ -674,7 +675,7 @@ function fromCSV(text){
     let c=state.cats.find(x=>x.name===cname)||cats.find(x=>x.name===cname);
     if(!c){c={id:'c'+hashStr('cat'+cname),name:cname.slice(0,6),emoji:'🎁',color:'#E8E8E8'};cats.push(c)}
     const pname=(iP>=0?r[iP]:'').trim().toLowerCase();
-    const pay=(PAYS.find(p=>p.name.toLowerCase()===pname)||{id:'cash'}).id;
+    const pay=([...PAYS,...OLD_PAYS].find(p=>p.name.toLowerCase()===pname)||(pname.startsWith('line pay money')?{id:'lpm'}:null)||{id:'cash'}).id;
     const note=(iN>=0?r[iN]:'').trim();
     const key=[date,cname,amount,pay,note].join('|');seen[key]=(seen[key]||0)+1;
     exps.push({id:'v'+hashStr(key+'#'+seen[key]),amount,catId:c.id,catName:c.name,catEmoji:c.emoji,catColor:c.color,pay,date,note,ts:Date.parse(date)+seen[key]});
