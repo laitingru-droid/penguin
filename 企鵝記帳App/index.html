@@ -123,6 +123,9 @@ input{font-family:inherit;color:inherit}
 textarea.field{min-height:180px;resize:vertical;font-size:14px;line-height:1.5}
 .nudge{display:flex;align-items:center;gap:10px;background:#FFF8E1;border-radius:18px;padding:10px 14px;margin-top:12px;font-size:14.5px;line-height:1.5}
 .nudge button{flex:none;background:var(--pink);color:#fff;border-radius:999px;padding:6px 12px;font-size:14px}
+.nudge button.nx{background:rgba(255,255,255,.8);color:var(--muted);width:30px;height:30px;padding:0;font-size:13px}
+.tap{cursor:pointer}.tap:active{background:#EEF7FD}
+.go{color:var(--muted);margin-left:4px}
 .cat-add{border:2px dashed var(--pink2);background:transparent;box-shadow:none;color:var(--pink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:15.5px}
 .cat-add b{font-size:31.5px;font-weight:normal}
 .tip{background:#fff;border-radius:20px;padding:14px 16px;font-size:15px;line-height:1.75;box-shadow:0 3px 12px rgba(62,74,99,.06)}
@@ -396,10 +399,11 @@ function renderStats(list,total){
     <div class="legend">${cats.slice(0,6).map(x=>`<div><span class="dot" style="background:${barColor(x.c.color)}"></span>${esc(x.c.emoji)} ${esc(x.c.name)} <span class="pct">${Math.round(x.sum/total*100)}%</span></div>`).join('')}${cats.length>6?`<div class="pct">…還有 ${cats.length-6} 類</div>`:''}</div>
   </div>
   <div class="sec-title">🎀 各類別花費</div>
-  <div class="card">${cats.map(x=>`<div class="bar-row"><div class="bar-top"><span>${esc(x.c.emoji)} ${esc(x.c.name)}<span class="pct">${x.n} 筆</span></span><span>$${fmt(x.sum)}</span></div>
+  <div class="pct" style="margin:-4px 6px 8px">點任一項可以看明細</div>
+  <div class="card">${cats.map(x=>`<div class="bar-row tap" onclick="openDetail('cat','${esc(x.c.id)}')"><div class="bar-top"><span>${esc(x.c.emoji)} ${esc(x.c.name)}<span class="pct">${x.n} 筆</span></span><span>${fmt(x.sum)}<span class="go">›</span></span></div>
     <div class="bar"><i style="width:${Math.max(x.sum/cats[0].sum*100,3)}%;background:${barColor(x.c.color)}"></i></div></div>`).join('')}</div>
   <div class="sec-title">💳 支付方式</div>
-  <div class="card">${pays.map(([id,sum])=>{const p=payOf(id);return `<div class="bar-row"><div class="bar-top"><span>${p.emoji} ${esc(p.name)}<span class="pct">${Math.round(sum/total*100)}%</span></span><span>$${fmt(sum)}</span></div>
+  <div class="card">${pays.map(([id,sum])=>{const p=payOf(id);return `<div class="bar-row tap" onclick="openDetail('pay','${esc(id)}')"><div class="bar-top"><span>${p.emoji} ${esc(p.name)}<span class="pct">${Math.round(sum/total*100)}%</span></span><span>${fmt(sum)}<span class="go">›</span></span></div>
     <div class="bar"><i style="width:${Math.max(sum/maxPay*100,3)}%;background:var(--pink2)"></i></div></div>`}).join('')}</div>`;
 }
 
@@ -701,8 +705,24 @@ function handleBackupText(text){
 function renderNudge(){
   const el=$('#nudge');if(!el)return;
   const n=state.expenses.length,lb=lastBackup();
-  const need=n>=10&&(!lb||Date.now()-lb>30*864e5);
-  el.innerHTML=need?`<div class="nudge"><span style="flex:1">🧊 ${lb?'超過一個月沒備份了':'還沒備份過喔'}，存一份比較安心～</span><button onclick="exportJSON()">備份</button></div>`:'';
+  let off=0;try{off=+localStorage.getItem(KEY+'-nudgeOff')||0}catch(_){}
+  const need=n>=10&&(!lb||Date.now()-lb>30*864e5)&&(!off||Date.now()-off>14*864e5);
+  el.innerHTML=need?`<div class="nudge"><span style="flex:1">🧊 ${lb?'超過一個月沒備份了':'還沒備份過喔'}，存一份比較安心～</span><button onclick="exportJSON()">備份</button><button class="nx" onclick="dismissNudge()" aria-label="關閉提醒">✕</button></div>`:'';
+}
+function dismissNudge(){try{localStorage.setItem(KEY+'-nudgeOff',String(Date.now()))}catch(_){}renderNudge();toast('好～兩週後還沒備份再提醒你 🐧')}
+function openDetail(kind,id){
+  const list=monthExp().filter(e=>kind==='cat'?catOf(e).id===id:e.pay===id).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.ts||0)-(a.ts||0));
+  let head;
+  if(kind==='cat'){const c=state.cats.find(x=>x.id===id)||(list[0]?catOf(list[0]):{name:'',emoji:'',color:'#eee'});head=`<span class="bub" style="background:${esc(c.color)};width:36px;height:36px;font-size:19px;border-radius:12px">${esc(c.emoji)}</span>${esc(c.name)}`}
+  else{const p=payOf(id);head=`${p.emoji} ${esc(p.name)}`}
+  const total=list.reduce((s,e)=>s+(+e.amount||0),0);
+  openSheet(`<div class="sheet-h"><h3 style="display:flex;align-items:center;gap:8px">${head}</h3><button class="x" onclick="closeSheet()">✕</button></div>
+  <div class="pct" style="margin:0 4px 10px">${state.month.getMonth()+1} 月共 ${list.length} 筆 · NT$ ${fmt(total)}　點一筆可以修改</div>
+  <div class="card">${list.map(e=>{const c=catOf(e),p=payOf(e.pay),d=new Date(e.date+'T00:00:00');
+    return `<button class="item" onclick="openAdd('${esc(e.id)}')"><span class="bub" style="background:${esc(c.color)}">${esc(c.emoji)}</span>
+    <span class="item-mid"><div class="item-name">${kind==='cat'?(e.note?esc(e.note):esc(c.name)):esc(c.name)+(e.note?' · '+esc(e.note):'')}</div>
+    <div class="item-sub">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）${kind==='cat'?' · '+p.emoji+' '+esc(p.name):''}</div></span>
+    <span class="amt">${fmt(e.amount)}</span></button>`}).join('')}</div>`);
 }
 async function doImport(exps,cats){
   try{
